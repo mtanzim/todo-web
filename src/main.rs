@@ -13,13 +13,21 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
-async fn add(new_task: web::Json<NewTask>) -> Result<String> {
+async fn add(data: web::Data<AppStateWithDBPool>, new_task: web::Json<NewTask>) -> Result<String> {
     println!("{:?}", new_task);
-    Ok(format!("Adding {}!", new_task.name))
+    let added_id = add_todo(&data.pool, new_task.into_inner()).await;
+    match added_id {
+        Ok(id) => Ok(format!("Adding {}!", id)),
+        Err(_) => Ok(format!("Failed to add task!")),
+    }
 }
 
 async fn manual_hello() -> impl Responder {
     HttpResponse::Ok().body("Hey there!")
+}
+
+struct AppStateWithDBPool {
+    pool: SqlitePool,
 }
 
 #[actix_web::main]
@@ -27,8 +35,9 @@ async fn main() -> std::io::Result<()> {
     let pool = SqlitePool::connect(&env::var("DATABASE_URL").expect("set up database url env"))
         .await
         .expect("cannot create db pool");
-    HttpServer::new(|| {
+    HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(AppStateWithDBPool { pool: pool.clone() }))
             .service(hello)
             .service(echo)
             .route("/hey", web::get().to(manual_hello))
