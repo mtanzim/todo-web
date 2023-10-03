@@ -1,6 +1,7 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, Result};
+use serde::Deserialize;
 use sqlx::sqlite::SqlitePool;
-use std::env;
+use std::{env, fmt::format};
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -10,6 +11,11 @@ async fn hello() -> impl Responder {
 #[post("/echo")]
 async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
+}
+
+async fn add(new_task: web::Json<NewTask>) -> Result<String> {
+    println!("{:?}", new_task);
+    Ok(format!("Adding {}!", new_task.name))
 }
 
 async fn manual_hello() -> impl Responder {
@@ -26,6 +32,7 @@ async fn main() -> std::io::Result<()> {
             .service(hello)
             .service(echo)
             .route("/hey", web::get().to(manual_hello))
+            .route("/api/add", web::post().to(add))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
@@ -40,7 +47,8 @@ struct Task {
     completed: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
+
 struct NewTask {
     name: String,
     completed: bool,
