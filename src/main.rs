@@ -1,29 +1,27 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqlitePool;
-use std::{env, fmt::format};
+use std::env;
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
-
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
-
-async fn add(data: web::Data<AppStateWithDBPool>, new_task: web::Json<NewTask>) -> Result<String> {
+async fn create(
+    data: web::Data<AppStateWithDBPool>,
+    new_task: web::Json<NewTask>,
+) -> Result<String> {
     println!("{:?}", new_task);
-    let added_id = add_todo(&data.pool, new_task.into_inner()).await;
+    let added_id = create_todo(&data.pool, new_task.into_inner()).await;
     match added_id {
         Ok(id) => Ok(format!("Adding {}!", id)),
         Err(_) => Ok(format!("Failed to add task!")),
     }
 }
 
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
+async fn list(data: web::Data<AppStateWithDBPool>) -> Result<impl Responder> {
+    let tasks_res = list_todo(&data.pool).await;
+    let empty_tasks: Vec<Task> = vec![];
+    match tasks_res {
+        Ok(tasks) => return Ok(web::Json(tasks)),
+        Err(_) => Ok(web::Json(empty_tasks)),
+    }
 }
 
 struct AppStateWithDBPool {
@@ -38,45 +36,58 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(AppStateWithDBPool { pool: pool.clone() }))
-            .service(hello)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
-            .route("/api/add", web::post().to(add))
+            .route("/api/add", web::post().to(create))
+            .route("/api/list", web::get().to(list))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
     .await
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct ErrMsg {
+    message: String,
+}
 // DB
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Task {
-    id: i32,
+    id: i64,
     name: String,
-    completed: bool,
+    completed: i64,
 }
 
 #[derive(Debug, Deserialize)]
-
 struct NewTask {
     name: String,
-    completed: bool,
 }
 
-async fn add_todo(pool: &SqlitePool, t: NewTask) -> anyhow::Result<i64> {
+async fn create_todo(pool: &SqlitePool, t: NewTask) -> anyhow::Result<i64> {
     let mut conn = pool.acquire().await?;
 
     // Insert the task, then obtain the ID of this row
     let id = sqlx::query!(
         r#"
-        INSERT INTO tasks (name, completed) VALUES (?1, ?2);
+        INSERT INTO tasks (name) VALUES (?1);
       "#,
         t.name,
-        t.completed,
     )
     .execute(&mut *conn)
     .await?
     .last_insert_rowid();
 
     Ok(id)
+}
+
+async fn list_todo(pool: &SqlitePool) -> anyhow::Result<Vec<Task>> {
+    // Insert the task, then obtain the ID of this row
+    let tasks = sqlx::query_as!(
+        Task,
+        "
+        SELECT id, name, completed FROM tasks;
+      ",
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(tasks)
 }
