@@ -1,4 +1,4 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, Result};
+use actix_web::{error, web, App, HttpServer, Responder, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqlitePool;
 use std::env;
@@ -11,16 +11,15 @@ async fn create(
     let added_id = create_todo(&data.pool, new_task.into_inner()).await;
     match added_id {
         Ok(id) => Ok(format!("Adding {}!", id)),
-        Err(_) => Ok(format!("Failed to add task!")),
+        Err(err) => Err(error::ErrorBadRequest(err)),
     }
 }
 
 async fn list(data: web::Data<AppStateWithDBPool>) -> Result<impl Responder> {
     let tasks_res = list_todo(&data.pool).await;
-    let empty_tasks: Vec<Task> = vec![];
     match tasks_res {
         Ok(tasks) => return Ok(web::Json(tasks)),
-        Err(_) => Ok(web::Json(empty_tasks)),
+        Err(err) => Err(error::ErrorBadRequest(err)),
     }
 }
 
@@ -88,6 +87,5 @@ async fn list_todo(pool: &SqlitePool) -> anyhow::Result<Vec<Task>> {
     )
     .fetch_all(pool)
     .await?;
-
     Ok(tasks)
 }
