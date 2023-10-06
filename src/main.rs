@@ -1,10 +1,11 @@
+use crate::handlers::{complete, create, delete, list};
 use actix_web::{web, App, HttpServer};
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqlitePool;
 use std::env;
 
-pub mod handlers;
 pub mod db;
+pub mod handlers;
 pub mod models;
 
 pub struct AppStateWithDBPool {
@@ -19,13 +20,10 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(AppStateWithDBPool { pool: pool.clone() }))
-            .route("/api/add", web::post().to(crate::handlers::create))
-            .route("/api/list", web::get().to(crate::handlers::list))
-            .route("/api/done/{id}", web::patch().to(crate::handlers::complete))
-            .route(
-                "/api/destroy/{id}",
-                web::delete().to(crate::handlers::delete),
-            )
+            .route("/api/add", web::post().to(create))
+            .route("/api/list", web::get().to(list))
+            .route("/api/done/{id}", web::patch().to(complete))
+            .route("/api/destroy/{id}", web::delete().to(delete))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
