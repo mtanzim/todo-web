@@ -9,7 +9,6 @@
   import { useEffect, useState } from "https://esm.sh/preact/hooks";
   import htm from "https://esm.sh/htm";
 
-  // Initialize htm with Preact
   const html = htm.bind(h);
   render(html`<${App} />`, document.body);
 
@@ -51,12 +50,18 @@
 
     return html`
       <div class="m-12">
+        <h1 class="text-4xl">Todo App</h1>
+        <div class="divider my-12"></div>
+        <h2 class="text-2xl">Add a new task</h1>
         <${NewTask} onAdd=${onAdd} />
+        <div class="divider my-12"></div>
+        <h2 class="text-2xl">Pending tasks</h1>
         <${List}
           tasks=${tasks.filter((t) => t.completed === 0)}
           onCTA=${onComplete}
         />
-        <div class="divider"></div>
+        <div class="divider my-12"></div>
+        <h2 class="text-2xl">Completed tasks</h1>
         <${List}
           tasks=${tasks.filter((t) => t.completed === 1)}
           onCTA=${onDelete}
@@ -71,6 +76,7 @@
     const submitHandler = async (e) => {
       e.preventDefault();
       onAdd(name);
+      setName("");
     };
     return html`
       <div class="form-control">
@@ -117,7 +123,7 @@
     const { tasks, onCTA } = props;
 
     return html`
-      <div class="flex gap-8">
+      <div class="flex gap-8 flex-wrap">
         ${tasks.map((task) => html`<${Task} ...${task} onCTA=${onCTA} />`)}
       </div>
     `;
