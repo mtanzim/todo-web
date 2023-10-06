@@ -1,7 +1,13 @@
 use crate::db::{complete_todo, create_todo, delete_todo, list_todo};
 use crate::models::NewTask;
 use crate::AppStateWithDBPool;
+use actix_files::NamedFile;
 use actix_web::{error, web, Responder, Result};
+use std::path::Path;
+
+pub async fn serve_index() -> Result<NamedFile> {
+    Ok(NamedFile::open(Path::new("public/index.html"))?)
+}
 
 pub async fn create(
     data: web::Data<AppStateWithDBPool>,
