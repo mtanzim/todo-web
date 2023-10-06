@@ -17,9 +17,18 @@ async fn create(
 
 async fn complete(data: web::Data<AppStateWithDBPool>, path: web::Path<u32>) -> Result<String> {
     let task_id = path.into_inner();
-    let updated_rows = complete_todo(&data.pool, task_id).await;
-    match updated_rows {
-        Ok(rows) => Ok(format!("Updated {} rows!", rows)),
+    let rows_updated = complete_todo(&data.pool, task_id).await;
+    match rows_updated {
+        Ok(rows) => Ok(format!("Updated {} rows", rows)),
+        Err(err) => Err(error::ErrorBadRequest(err)),
+    }
+}
+
+async fn delete(data: web::Data<AppStateWithDBPool>, path: web::Path<u32>) -> Result<String> {
+    let task_id = path.into_inner();
+    let rows_updated = delete_todo(&data.pool, task_id).await;
+    match rows_updated {
+        Ok(rows) => Ok(format!("Deleted {} rows!", rows)),
         Err(err) => Err(error::ErrorBadRequest(err)),
     }
 }
@@ -47,6 +56,7 @@ async fn main() -> std::io::Result<()> {
             .route("/api/add", web::post().to(create))
             .route("/api/list", web::get().to(list))
             .route("/api/done/{id}", web::patch().to(complete))
+            .route("/api/destroy/{id}", web::delete().to(delete))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
@@ -94,6 +104,23 @@ async fn complete_todo(pool: &SqlitePool, id: u32) -> anyhow::Result<u64> {
     let rows_updated = sqlx::query!(
         r#"
         UPDATE tasks SET completed=1 WHERE id=(?1);
+      "#,
+        id,
+    )
+    .execute(&mut *conn)
+    .await?
+    .rows_affected();
+
+    Ok(rows_updated)
+}
+
+async fn delete_todo(pool: &SqlitePool, id: u32) -> anyhow::Result<u64> {
+    let mut conn = pool.acquire().await?;
+
+    // Insert the task, then obtain the ID of this row
+    let rows_updated = sqlx::query!(
+        r#"
+        DELETE FROM tasks WHERE id=(?1);
       "#,
         id,
     )
