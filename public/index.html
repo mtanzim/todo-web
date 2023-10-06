@@ -21,22 +21,56 @@
         console.log({ tasks: v });
       });
     }, []);
+
+    const onAdd = async (name) => {
+      const isSuccess = await createTask(name);
+      if (!isSuccess) {
+        return;
+      }
+      const newTasks = await getTodos();
+      setTasks(newTasks);
+    };
+
+    const onDelete = async (id) => {
+      const isSuccess = await deleteTask(id);
+      if (!isSuccess) {
+        return;
+      }
+      const newTasks = await getTodos();
+      setTasks(newTasks);
+    };
+
+    const onComplete = async (id) => {
+      const isSuccess = await completeTask(id);
+      if (!isSuccess) {
+        return;
+      }
+      const newTasks = await getTodos();
+      setTasks(newTasks);
+    };
+
     return html`
       <div class="m-12">
-        <${NewTask} />
-        <${List} tasks=${tasks.filter((t) => t.completed === 0)} />
+        <${NewTask} onAdd=${onAdd} />
+        <${List}
+          tasks=${tasks.filter((t) => t.completed === 0)}
+          onCTA=${onComplete}
+        />
         <div class="divider"></div>
-        <${List} tasks=${tasks.filter((t) => t.completed === 1)} />
+        <${List}
+          tasks=${tasks.filter((t) => t.completed === 1)}
+          onCTA=${onDelete}
+        />
         <div></div>
       </div>
     `;
   }
 
-  function NewTask() {
+  function NewTask({ onAdd }) {
     const [name, setName] = useState("");
     const submitHandler = async (e) => {
       e.preventDefault();
-      await createTask(name);
+      onAdd(name);
     };
     return html`
       <div class="form-control">
@@ -57,43 +91,34 @@
   }
 
   function Task(props) {
-    const { id, name, completed } = props;
+    const { id, name, completed, onCTA } = props;
     return html`<div class="card w-96 bg-base-100 shadow-xl">
       <div class="card-body">
         <p>${name}</p>
         <div class="card-actions justify-end">
-          <${CTA} completed=${completed} id=${id} />
+          <${CTA} completed=${completed} id=${id} onCTA=${onCTA} />
         </div>
       </div>
     </div>`;
   }
 
-  function CTA({ completed, id }) {
-    function completeHandler(e) {
-      e.preventDefault();
-      completeTask(id);
-    }
-
-    function deleteHandler(e) {
-      e.preventDefault();
-      deleteTask(id);
-    }
+  function CTA({ completed, id, onCTA }) {
     if (completed) {
-      return html`<button onClick=${deleteHandler} class="btn btn-error">
+      return html`<button onClick=${() => onCTA(id)} class="btn btn-error">
         Delete
       </button>`;
     }
-    return html`<button onClick=${completeHandler} class="btn btn-success">
+    return html`<button onClick=${() => onCTA(id)} class="btn btn-success">
       Mark done
     </button>`;
   }
 
   function List(props) {
-    const { tasks } = props;
+    const { tasks, onCTA } = props;
 
     return html`
       <div class="flex gap-8">
-        ${tasks.map((task) => html`<${Task} ...${task} />`)}
+        ${tasks.map((task) => html`<${Task} ...${task} onCTA=${onCTA} />`)}
       </div>
     `;
   }
@@ -133,6 +158,10 @@
     return false;
   }
   async function createTask(name) {
+    if (name.length === 0) {
+      console.log("Empty task name");
+      return false;
+    }
     const res = await fetch(`/api/add`, {
       method: "POST",
       headers: {
