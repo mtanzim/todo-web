@@ -23,7 +23,6 @@ DATABASE_URL=sqlite:todos.db cargo watch -x run
 - To run a test script on the running server using `curl` and `jq`, run the following. Note that it will reset the database!
 
 ```bash
-sqlx database reset
 chmod +x try.sh
 ./try.sh
 ```
