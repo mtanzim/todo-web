@@ -4,6 +4,8 @@ use sqlx::sqlite::SqlitePool;
 use std::env;
 
 pub mod handlers;
+pub mod db;
+pub mod models;
 
 pub struct AppStateWithDBPool {
     pool: SqlitePool,
