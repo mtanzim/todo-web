@@ -15,6 +15,15 @@ async fn create(
     }
 }
 
+async fn complete(data: web::Data<AppStateWithDBPool>, path: web::Path<u32>) -> Result<String> {
+    let task_id = path.into_inner();
+    let updated_rows = complete_todo(&data.pool, task_id).await;
+    match updated_rows {
+        Ok(rows) => Ok(format!("Updated {} rows!", rows)),
+        Err(err) => Err(error::ErrorBadRequest(err)),
+    }
+}
+
 async fn list(data: web::Data<AppStateWithDBPool>) -> Result<impl Responder> {
     let tasks_res = list_todo(&data.pool).await;
     match tasks_res {
@@ -37,6 +46,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppStateWithDBPool { pool: pool.clone() }))
             .route("/api/add", web::post().to(create))
             .route("/api/list", web::get().to(list))
+            .route("/api/done/{id}", web::patch().to(complete))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
@@ -75,6 +85,23 @@ async fn create_todo(pool: &SqlitePool, t: NewTask) -> anyhow::Result<i64> {
     .last_insert_rowid();
 
     Ok(id)
+}
+
+async fn complete_todo(pool: &SqlitePool, id: u32) -> anyhow::Result<u64> {
+    let mut conn = pool.acquire().await?;
+
+    // Insert the task, then obtain the ID of this row
+    let rows_updated = sqlx::query!(
+        r#"
+        UPDATE tasks SET completed=1 WHERE id=(?1);
+      "#,
+        id,
+    )
+    .execute(&mut *conn)
+    .await?
+    .rows_affected();
+
+    Ok(rows_updated)
 }
 
 async fn list_todo(pool: &SqlitePool) -> anyhow::Result<Vec<Task>> {
