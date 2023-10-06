@@ -1,8 +1,10 @@
 use crate::handlers::{complete, create, delete, list};
-use actix_web::{web, App, HttpServer};
+use actix_files::NamedFile;
+use std::path::Path;
+use actix_web::{web, App, HttpServer, Result};
+use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqlitePool;
-use dotenv::dotenv;
 use std::env;
 
 pub mod db;
@@ -11,6 +13,10 @@ pub mod models;
 
 pub struct AppStateWithDBPool {
     pool: SqlitePool,
+}
+
+async fn serve_index() -> Result<NamedFile> {
+    Ok(NamedFile::open(Path::new("public/index.html"))?)
 }
 
 #[actix_web::main]
@@ -22,6 +28,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(AppStateWithDBPool { pool: pool.clone() }))
+            .route("/", actix_web::web::get().to(serve_index))
             .route("/api/add", web::post().to(create))
             .route("/api/list", web::get().to(list))
             .route("/api/done/{id}", web::patch().to(complete))

@@ -1,0 +1,77 @@
+<link
+  href="https://cdn.jsdelivr.net/npm/daisyui@3.9.2/dist/full.css"
+  rel="stylesheet"
+  type="text/css"
+/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module">
+  import { h, Component, render } from "https://esm.sh/preact";
+  import { useEffect, useState } from "https://esm.sh/preact/hooks";
+  import htm from "https://esm.sh/htm";
+
+  // Initialize htm with Preact
+  const html = htm.bind(h);
+  render(html`<${App} name="World" />`, document.body);
+
+  function App(props) {
+    return html`
+      <div class="m-12">
+        <${NewTask} />
+        <${List} />
+      </div>
+    `;
+  }
+
+  function NewTask() {
+    return html`
+      <div class="form-control">
+        <div class="input-group">
+          <input
+            type="text"
+            placeholder="type here..."
+            class="input input-bordered"
+          />
+          <button class="btn btn-primary">Add Task</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function Task(props) {
+    const { id, name, completed } = props;
+    return html`<div class="card w-96 bg-base-100 shadow-xl">
+      <div class="card-body">
+        <p>${name}</p>
+        <div class="card-actions justify-end">
+          <button class="btn btn-success">Mark done</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function List() {
+    const [tasks, setTasks] = useState([]);
+    useEffect(() => {
+      getTodos().then((v) => {
+        setTasks(v);
+        console.log({ tasks: v });
+      });
+    }, []);
+
+    return html`
+      <div class="flex gap-8">
+        ${tasks.map((task) => html`<${Task} ...${task} />`)}
+      </div>
+    `;
+  }
+
+  async function getTodos() {
+    const todoRes = await fetch("/api/list");
+    if (todoRes.ok) {
+      const todos = await todoRes.json();
+      return todos;
+    }
+    console.log("Error fetching todos");
+    return [];
+  }
+</script>
