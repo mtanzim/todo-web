@@ -26,3 +26,6 @@ cargo watch -x run
 chmod +x try.sh
 ./try.sh
 ```
+
+
+- Navigate to `http://localhost:8080/` to interact with the UI
