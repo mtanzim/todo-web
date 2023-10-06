@@ -2,6 +2,7 @@ use crate::handlers::{complete, create, delete, list};
 use actix_web::{web, App, HttpServer};
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqlitePool;
+use dotenv::dotenv;
 use std::env;
 
 pub mod db;
@@ -14,6 +15,7 @@ pub struct AppStateWithDBPool {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    dotenv().ok();
     let pool = SqlitePool::connect(&env::var("DATABASE_URL").expect("set up database url env"))
         .await
         .expect("cannot create db pool");

@@ -17,7 +17,7 @@ sqlx migrate run
 - To start the app, run:
 
 ```bash
-DATABASE_URL=sqlite:todos.db cargo watch -x run
+cargo watch -x run
 ```
 
 - To run a test script on the running server using `curl` and `jq`, run the following. Note that it will reset the database!
