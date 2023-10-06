@@ -11,18 +11,33 @@
 
   // Initialize htm with Preact
   const html = htm.bind(h);
-  render(html`<${App} name="World" />`, document.body);
+  render(html`<${App} />`, document.body);
 
-  function App(props) {
+  function App() {
+    const [tasks, setTasks] = useState([]);
+    useEffect(() => {
+      getTodos().then((v) => {
+        setTasks(v);
+        console.log({ tasks: v });
+      });
+    }, []);
     return html`
       <div class="m-12">
         <${NewTask} />
-        <${List} />
+        <${List} tasks=${tasks.filter((t) => t.completed === 0)} />
+        <div class="divider"></div>
+        <${List} tasks=${tasks.filter((t) => t.completed === 1)} />
+        <div></div>
       </div>
     `;
   }
 
   function NewTask() {
+    const [name, setName] = useState("");
+    const submitHandler = async (e) => {
+      e.preventDefault();
+      await createTask(name);
+    };
     return html`
       <div class="form-control">
         <div class="input-group">
@@ -30,8 +45,12 @@
             type="text"
             placeholder="type here..."
             class="input input-bordered"
+            value=${name}
+            onChange=${(e) => setName(e.target.value)}
           />
-          <button class="btn btn-primary">Add Task</button>
+          <button onClick=${submitHandler} class="btn btn-primary">
+            Add Task
+          </button>
         </div>
       </div>
     `;
@@ -43,20 +62,34 @@
       <div class="card-body">
         <p>${name}</p>
         <div class="card-actions justify-end">
-          <button class="btn btn-success">Mark done</button>
+          <${CTA} completed=${completed} id=${id} />
         </div>
       </div>
     </div>`;
   }
 
-  function List() {
-    const [tasks, setTasks] = useState([]);
-    useEffect(() => {
-      getTodos().then((v) => {
-        setTasks(v);
-        console.log({ tasks: v });
-      });
-    }, []);
+  function CTA({ completed, id }) {
+    function completeHandler(e) {
+      e.preventDefault();
+      completeTask(id);
+    }
+
+    function deleteHandler(e) {
+      e.preventDefault();
+      deleteTask(id);
+    }
+    if (completed) {
+      return html`<button onClick=${deleteHandler} class="btn btn-error">
+        Delete
+      </button>`;
+    }
+    return html`<button onClick=${completeHandler} class="btn btn-success">
+      Mark done
+    </button>`;
+  }
+
+  function List(props) {
+    const { tasks } = props;
 
     return html`
       <div class="flex gap-8">
@@ -65,13 +98,54 @@
     `;
   }
 
+  // API calls
   async function getTodos() {
-    const todoRes = await fetch("/api/list");
-    if (todoRes.ok) {
-      const todos = await todoRes.json();
+    const res = await fetch("/api/list");
+    if (res.ok) {
+      const todos = await res.json();
       return todos;
     }
     console.log("Error fetching todos");
     return [];
+  }
+  async function completeTask(id) {
+    const res = await fetch(`/api/done/${id}`, {
+      method: "PATCH",
+    });
+    if (res.ok) {
+      const resText = await res.text();
+      console.log({ resText });
+      return true;
+    }
+    console.log("Error completing task");
+    return false;
+  }
+  async function deleteTask(id) {
+    const res = await fetch(`/api/destroy/${id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      const resText = await res.text();
+      console.log({ resText });
+      return true;
+    }
+    console.log("Error deleting task");
+    return false;
+  }
+  async function createTask(name) {
+    const res = await fetch(`/api/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name }),
+    });
+    if (res.ok) {
+      const resText = await res.text();
+      console.log({ resText });
+      return true;
+    }
+    console.log("Error creating task");
+    return false;
   }
 </script>
