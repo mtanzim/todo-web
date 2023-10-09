@@ -5,7 +5,7 @@
 
 ## Running the app
 
-To setup the database, use [turso](https://turso.tech/) and get the following credentials.
+To setup the database, use [turso](https://turso.tech/) and get the following credentials in a `.env` file at the root.
 
 ```bash
 LIBSQL_CLIENT_URL=
