@@ -44,3 +44,5 @@ chmod +x try.sh
 docker build -t todo-web .
 docker run -p  8080:8080 --env-file ./.env -it --rm todo-web
 ```
+
+- To run it on [fly.io](fly.io), setup `.env` file contents as `fly secrets`
