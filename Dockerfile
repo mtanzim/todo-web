@@ -8,13 +8,12 @@ RUN sed -i 's#src/main.rs#dummy.rs#' Cargo.toml
 RUN cargo build --release
 RUN sed -i 's#dummy.rs#src/main.rs#' Cargo.toml
 COPY . .
-COPY public public
 RUN cargo install --path .
 
 
 FROM rust:1.73
 WORKDIR /usr/src/todo-web
 COPY --from=builder /usr/local/cargo/bin/todo-web /usr/local/bin/todo-web
-COPY --from=builder /usr/src/todo-web/public /usr/local/bin/public
+COPY --from=builder /usr/src/todo-web/public public
 EXPOSE 8080
 CMD ["todo-web"]
