@@ -36,3 +36,11 @@ chmod +x try.sh
 ```
 
 - Navigate to `http://localhost:8080/` to interact with the UI
+
+
+- To run the app inside docker:
+
+```bash
+docker build -t todo-web .
+docker run -p  8080:8080 --env-file ./.env -it --rm todo-web
+```

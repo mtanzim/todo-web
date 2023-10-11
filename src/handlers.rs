@@ -7,7 +7,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 pub async fn serve_index() -> Result<NamedFile> {
-    Ok(NamedFile::open(Path::new("public/index.html"))?)
+    Ok(NamedFile::open(Path::new("./public/index.html"))?)
 }
 
 pub async fn create(
