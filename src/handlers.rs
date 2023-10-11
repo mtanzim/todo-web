@@ -3,11 +3,10 @@ use crate::models::NewTask;
 use crate::AppStateWithDBPool;
 use actix_files::NamedFile;
 use actix_web::{error, web, Responder, Result};
-use std::path::Path;
 use std::sync::Arc;
 
 pub async fn serve_index() -> Result<NamedFile> {
-    Ok(NamedFile::open(Path::new("public/index.html"))?)
+    Ok(NamedFile::open("public/index.html").expect("could not open html file"))
 }
 
 pub async fn create(

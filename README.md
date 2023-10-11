@@ -1,11 +1,11 @@
-# todo-web
+# [todo-web](https://todo-web-rust.fly.dev/)
 
 - Simple Todo list CRUD app to experiment with `rust` backend development
 - Uses [actix](https://actix.rs/) and [sqlx](https://github.com/launchbadge/sqlx)
 
 ## Running the app
 
-To setup the database, use [turso](https://turso.tech/) and get the following credentials.
+To setup the database, use [turso](https://turso.tech/) and get the following credentials in a `.env` file at the root.
 
 ```bash
 LIBSQL_CLIENT_URL=
@@ -36,3 +36,13 @@ chmod +x try.sh
 ```
 
 - Navigate to `http://localhost:8080/` to interact with the UI
+
+
+- To run the app inside docker:
+
+```bash
+docker build -t todo-web .
+docker run -p  8080:8080 --env-file ./.env -it --rm todo-web
+```
+
+- To run it on [fly.io](fly.io), setup `.env` file contents as `fly secrets`
