@@ -5,13 +5,21 @@
 
 ## Running the app
 
-To setup the database:
+To setup the database, use [turso](https://turso.tech/) and get the following credentials.
 
 ```bash
-cargo install sqlx-cli # if not installed
-sqlx database drop
-sqlx database create
-sqlx migrate run
+LIBSQL_CLIENT_URL=
+LIBSQL_CLIENT_TOKEN=
+```
+
+Use the `turso` CLI and run the following sql initialization script:
+
+```sql
+CREATE TABLE IF NOT EXISTS tasks (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  completed INTEGER NOT NULL DEFAULT 0
+)
 ```
 
 - To start the app, run:
@@ -26,6 +34,5 @@ cargo watch -x run
 chmod +x try.sh
 ./try.sh
 ```
-
 
 - Navigate to `http://localhost:8080/` to interact with the UI

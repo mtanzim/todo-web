@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-sqlx database reset
 
 curl --location '127.0.0.1:8080/api/add' \
 --header 'Content-Type: application/json' \
