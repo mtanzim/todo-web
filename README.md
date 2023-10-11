@@ -1,4 +1,4 @@
-# todo-web
+# [todo-web](https://todo-web-rust.fly.dev/)
 
 - Simple Todo list CRUD app to experiment with `rust` backend development
 - Uses [actix](https://actix.rs/) and [sqlx](https://github.com/launchbadge/sqlx)
