@@ -1,6 +1,7 @@
-use crate::handlers::{complete, create, delete, list, serve_index};
+use crate::handlers::{complete, create, delete, list};
 
-use actix_web::{web, App, HttpServer, middleware};
+use actix_files as fs;
+use actix_web::{middleware, web, App, HttpServer};
 use dotenv::dotenv;
 use libsql_client::Client;
 use serde::{Deserialize, Serialize};
@@ -26,11 +27,15 @@ async fn main() -> std::io::Result<()> {
                 client: client.to_owned(),
             }))
             .wrap(middleware::Logger::default())
-            .route("/", actix_web::web::get().to(serve_index))
             .route("/api/add", web::post().to(create))
             .route("/api/list", web::get().to(list))
             .route("/api/done/{id}", web::patch().to(complete))
             .route("/api/destroy/{id}", web::delete().to(delete))
+            .service(
+                fs::Files::new("/", "./public")
+                    .index_file("index.html")
+                    .use_last_modified(true),
+            )
     })
     .bind(("0.0.0.0", port))?
     .run()
