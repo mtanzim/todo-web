@@ -3,7 +3,7 @@ import { useEffect, useState } from "https://esm.sh/preact/hooks";
 import htm from "https://esm.sh/htm";
 
 const html = htm.bind(h);
-render(html`<${App} />`, document.body);
+render(html`<${App} />`, document.getElementById("app"));
 
 function App() {
   const [tasks, setTasks] = useState([]);
